@@ -1,7 +1,6 @@
 # 🏠 IoT Smart Home Ultimate - Monitoring & Automation System
 
 ![Project Banner](docs/dashboard_screenshot.png)
-*(Chèn ảnh chụp giao diện Dashboard V4 của bạn vào đây)*
 
 ## 📖 Giới thiệu (Overview)
 **IoT Smart Home Ultimate** là hệ thống giám sát và điều khiển nhà thông minh toàn diện, được xây dựng từ con số 0 (Full-stack IoT). Hệ thống cho phép theo dõi thời gian thực các thông số môi trường (Nhiệt độ, Độ ẩm, Khí Gas...), điều khiển thiết bị từ xa qua Internet, vẽ biểu đồ lịch sử và thiết lập các luật tự động hóa (Automation Rules).
