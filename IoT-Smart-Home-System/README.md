@@ -1,123 +1,163 @@
 # IoT Smart Home Ultimate - Full Stack Monitoring System
 
-> **Hệ thống giám sát và điều khiển nhà thông minh toàn diện, xây dựng trên nền tảng ESP32, Node.js và MQTT.**
+![NodeJS](https://img.shields.io/badge/Node.js-v14+-43853D?style=flat&logo=node.js&logoColor=white)
+![ESP32](https://img.shields.io/badge/Platform-ESP32-E7352C?style=flat&logo=espressif&logoColor=white)
+![MQTT](https://img.shields.io/badge/Protocol-MQTT-660066?style=flat)
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
 
-![Project Dashboard](docs/dashboard.png)
+> **Hệ thống giám sát và điều khiển nhà thông minh toàn diện (End-to-End), tối ưu hóa cho độ trễ thấp và trải nghiệm người dùng thời gian thực.**
 
-## 1. Giới thiệu (Overview)
+![Dashboard Banner](docs/dashboard_main.png)
 
-Dự án này là một giải pháp **Full-stack IoT** (Internet of Things) được thiết kế để giải quyết bài toán giám sát môi trường và điều khiển thiết bị từ xa với độ trễ thấp (Real-time).
-
-Khác với các dự án Arduino đơn lẻ, hệ thống này mô phỏng một kiến trúc IoT công nghiệp thu nhỏ với đầy đủ các tầng:
-* **Edge Device (Thiết bị biên):** ESP32 xử lý tín hiệu cảm biến và điều khiển relay.
-* **Connectivity (Kết nối):** MQTT Broker đóng vai trò trung chuyển tin nhắn tốc độ cao.
-* **Backend Server:** Node.js xử lý logic nghiệp vụ, lưu trữ và tự động hóa.
-* **Frontend Dashboard:** Giao diện web tương tác thời gian thực, hỗ trợ đa nền tảng.
-
----
-
-## 2. Kiến trúc hệ thống & Luồng dữ liệu
-
-Hệ thống hoạt động dựa trên mô hình **Publish/Subscribe** (Xuất bản/Đăng ký) để tối ưu hóa băng thông và đảm bảo tính thời gian thực.
-
-### Sơ đồ luồng dữ liệu (Data Flow):
-
-1.  **Thu thập:** ESP32 đọc dữ liệu từ cảm biến (Nhiệt độ, Độ ẩm, Gas) chu kỳ 2s/lần.
-2.  **Đóng gói:** Dữ liệu được đóng gói thành JSON: `{"id": "LivingRoom", "temp": 28.5, "relay": "OFF"}`.
-3.  **Truyền tải:** ESP32 gửi (Publish) gói tin lên topic `esp32/data` thông qua MQTT Broker.
-4.  **Xử lý trung tâm:**
-    * Server Node.js (Subscriber) nhận gói tin từ Broker.
-    * Lưu dữ liệu vào bộ nhớ đệm (RAM) để phục vụ vẽ biểu đồ.
-    * **Automation Engine:** So sánh dữ liệu với các luật (Rules) đã cài đặt. Nếu thỏa mãn (ví dụ: Nhiệt > 35), Server tự động gửi lệnh điều khiển ngược lại thiết bị.
-5.  **Hiển thị:** Server đẩy dữ liệu xuống trình duyệt người dùng qua **WebSocket (Socket.io)**, giúp giao diện cập nhật ngay lập tức mà không cần F5.
+## 📑 Mục Lục
+1. [Giới thiệu](#1-giới-thiệu)
+2. [Demo Dự Án](#2-demo-dự-án-video--images)
+3. [Kiến Trúc Hệ Thống](#3-kiến-trúc-hệ-thống-system-architecture)
+4. [Phân Tích Công Nghệ & Thư Viện](#4-phân-tích-công-nghệ--thư-viện-tech-stack)
+5. [Thiết Kế Phần Cứng](#5-thiết-kế-phần-cứng-hardware-design)
+6. [Cài Đặt & Triển Khai](#6-cài-đặt--triển-khai)
+7. [Tính Năng Nâng Cao](#7-tính-năng-nâng-cao)
 
 ---
 
-## 3. Phân tích công nghệ & Thư viện
+## 1. Giới thiệu
 
-### A. Phía Vi điều khiển (Firmware - ESP32)
+**IoT Smart Home Ultimate** giải quyết bài toán phân mảnh của các thiết bị IoT bằng cách cung cấp một nền tảng tập trung (Centralized Platform). Hệ thống không chỉ thu thập dữ liệu môi trường mà còn cung cấp khả năng điều khiển phản hồi nhanh (Low Latency Control) và tự động hóa cục bộ (Local Automation).
 
-| Thư viện | Vai trò & Tại sao sử dụng? |
-| :--- | :--- |
-| **WiFiManager** | **Cấu hình mạng động (Dynamic Captive Portal).**<br>Thay vì nạp cứng (hard-code) SSID/Pass trong code, thư viện này cho phép ESP32 tự phát WiFi khi mất kết nối. Người dùng dùng điện thoại kết nối vào để nhập WiFi nhà và địa chỉ MQTT Server. |
-| **PubSubClient** | **Giao thức MQTT.**<br>Thư viện nhẹ và ổn định nhất để ESP32 giao tiếp với MQTT Broker. Hỗ trợ cơ chế "Last Will" (thông báo khi thiết bị mất điện đột ngột) và "Keep Alive". |
-| **ArduinoJson** | **Xử lý dữ liệu JSON.**<br>Giúp tuần tự hóa (Serialize) dữ liệu cảm biến thành chuỗi JSON chuẩn để gửi đi và giải mã (Deserialize) lệnh điều khiển từ Server gửi về. |
-| **Adafruit SSD1306** | **Giao diện tại chỗ.**<br>Hiển thị IP, trạng thái kết nối và thông số môi trường ngay trên màn hình OLED gắn trên thiết bị. |
-
-### B. Phía Máy chủ (Backend - Node.js)
-
-| Thư viện | Vai trò & Tại sao sử dụng? |
-| :--- | :--- |
-| **Express.js** | **Web Server Framework.**<br>Tạo HTTP Server để phục vụ giao diện Web và cung cấp các RESTful API (như API đổi tên thiết bị, API thêm luật tự động). |
-| **MQTT.js** | **MQTT Client cho Node.js.**<br>Giúp Server kết nối vào Broker. Nó đóng vai trò như một "bộ não", lắng nghe mọi dữ liệu từ các cảm biến gửi về. |
-| **Socket.io** | **Giao tiếp thời gian thực (Real-time).**<br>Tạo kênh liên lạc 2 chiều giữa Server và Trình duyệt Web. Khi MQTT nhận dữ liệu mới, Socket.io đẩy ngay xuống Web Dashboard, giúp biểu đồ nhảy số tức thì. |
-| **fs-extra** | **Lưu trữ cục bộ (Persistence).**<br>Lưu cấu hình hệ thống (Luật tự động, Tên thiết bị, Cấu hình biểu đồ) vào file JSON, đảm bảo không mất dữ liệu khi khởi động lại Server. |
-
-### C. Phía Giao diện (Frontend)
-
-| Thư viện | Vai trò & Tại sao sử dụng? |
-| :--- | :--- |
-| **Chart.js + Zoom** | **Trực quan hóa dữ liệu.**<br>Vẽ biểu đồ đường (Line Chart) mượt mà. Plugin Zoom cho phép người dùng lăn chuột để phóng to/thu nhỏ trục thời gian, xem lại lịch sử chi tiết. |
-| **SortableJS** | **Trải nghiệm người dùng (UX).**<br>Cho phép người dùng kéo thả các Widget và Biểu đồ để sắp xếp lại giao diện theo ý thích cá nhân. |
+### Điểm nổi bật:
+* **Real-time:** Cập nhật dữ liệu tức thì qua WebSockets (độ trễ < 100ms).
+* **Scalable:** Dễ dàng mở rộng thêm hàng chục thiết bị cảm biến mà không cần sửa code Server.
+* **Resilient:** Cơ chế tự động kết nối lại (Auto-reconnect) khi mất mạng hoặc mất điện.
 
 ---
 
-## 4. Hướng dẫn Cài đặt & Triển khai
+## 2. Demo Dự Án (Video & Images)
+
+### 🎥 Video Demo Hoạt Động
+Xem video demo chi tiết về khả năng phản hồi của hệ thống và tính năng tự động hóa:
+
+[![Xem Video Demo](https://img.youtube.com/vi/VIDEO_ID_HERE/0.jpg)](https://www.youtube.com/watch?v=VIDEO_ID_HERE)
+*(Thay `VIDEO_ID_HERE` bằng ID video YouTube của bạn hoặc xóa dòng này nếu chèn file GIF)*
+
+### 📸 Giao diện thực tế
+| Dashboard Grid | Automation Rules | Mobile Responsive |
+| :---: | :---: | :---: |
+| ![Grid](docs/grid_view.png) | ![Rules](docs/rules_view.png) | ![Mobile](docs/mobile_view.png) |
+
+---
+
+## 3. Kiến Trúc Hệ Thống (System Architecture)
+
+Hệ thống hoạt động dựa trên mô hình **Event-Driven Architecture** (Kiến trúc hướng sự kiện).
+
+### Sơ đồ khối (Block Diagram)
+Biểu diễn luồng dữ liệu từ Cảm biến -> Vi điều khiển -> Broker -> Server -> Client.
+
+![Block Diagram](docs/block_diagram.png)
+*(Chèn ảnh sơ đồ khối vào thư mục docs/block_diagram.png)*
+
+### Luồng xử lý dữ liệu (Data Flow):
+1.  **Ingestion:** ESP32 thu thập dữ liệu thô từ cảm biến (Analog/Digital).
+2.  **Transport:** Dữ liệu được đóng gói JSON và gửi qua giao thức MQTT (TCP/IP).
+3.  **Processing:** Node.js Server phân tích gói tin, lưu vào In-Memory Database (RAM) để truy xuất nhanh.
+4.  **Action:** Automation Engine kiểm tra điều kiện. Nếu thỏa mãn, lệnh điều khiển được gửi ngược lại qua MQTT.
+5.  **Visualization:** Socket.io đẩy dữ liệu xuống trình duyệt người dùng.
+
+---
+
+## 4. Phân Tích Công Nghệ & Thư Viện (Tech Stack)
+
+Tại sao lại chọn những công nghệ này? Dưới đây là giải thích chi tiết kỹ thuật.
+
+### A. Firmware (ESP32)
+
+| Thư Viện | Tại sao sử dụng? & Cơ chế hoạt động |
+| :--- | :--- |
+| **`WiFiManager`** | **Vấn đề:** Hard-code SSID/Pass trong code khiến thiết bị không thể dùng ở nơi khác.<br>**Giải pháp:** Thư viện này tạo ra một *Captive Portal*. Khi ESP32 không tìm thấy WiFi cũ, nó tự phát ra WiFi riêng (AP Mode). Người dùng kết nối vào đó để cấu hình WiFi mới qua giao diện web. |
+| **`PubSubClient`** | **Vấn đề:** HTTP Request quá chậm và tốn băng thông cho IoT.<br>**Giải pháp:** Sử dụng giao thức MQTT. Thư viện này giúp duy trì kết nối *Persistent Connection* với Broker, giúp việc gửi/nhận tin nhắn diễn ra tức thì với overhead cực thấp (header chỉ 2 bytes). |
+| **`ArduinoJson`** | **Vấn đề:** Xử lý chuỗi thủ công (String concatenation) dễ gây lỗi bộ nhớ (Heap Fragmentation).<br>**Giải pháp:** Thư viện này quản lý bộ nhớ động thông minh để Serialization/Deserialization dữ liệu JSON, đảm bảo tính ổn định khi chạy lâu dài. |
+
+### B. Backend (Node.js)
+
+| Thư Viện | Tại sao sử dụng? & Cơ chế hoạt động |
+| :--- | :--- |
+| **`MQTT.js`** | Đóng vai trò là MQTT Client trên Server. Nó sử dụng cơ chế *Event Emitter* của Node.js để xử lý hàng ngàn tin nhắn đến cùng lúc mà không bị chặn (Non-blocking I/O). |
+| **`Socket.io`** | Thay vì để Client phải hỏi Server liên tục (Polling - gây tốn tài nguyên), Socket.io tạo kênh WebSocket giữ kết nối 2 chiều. Server chủ động "bắn" dữ liệu xuống Client ngay khi có tin mới. |
+| **`fs-extra`** | Phiên bản nâng cấp của module `fs` gốc. Được dùng để lưu trữ cấu hình (Luật, Tên thiết bị) dưới dạng file JSON (Flat-file Database) - giải pháp đơn giản, không cần cài đặt SQL/NoSQL phức tạp. |
+
+### C. Frontend
+
+| Thư Viện | Tại sao sử dụng? & Cơ chế hoạt động |
+| :--- | :--- |
+| **`Chart.js`** | Sử dụng HTML5 Canvas để vẽ đồ thị. Nhẹ hơn các thư viện SVG (như D3.js) khi xử lý số lượng điểm dữ liệu lớn trong thời gian thực. |
+| **`SortableJS`** | Thư viện JavaScript thuần (không phụ thuộc jQuery) giúp thực hiện thao tác Drag & Drop (Kéo thả) trên DOM, mang lại trải nghiệm UX mượt mà như native app. |
+
+---
+
+## 5. Thiết Kế Phần Cứng (Hardware Design)
+
+### Sơ đồ nguyên lý (Schematic)
+Chi tiết cách đấu nối các module với ESP32.
+
+![Schematic](docs/schematic.png)
+*(Chèn ảnh sơ đồ nguyên lý mạch vào thư mục docs/schematic.png)*
+
+### Bảng đấu nối (Pinout Mapping)
+
+| Module | Pin ESP32 | Loại Tín Hiệu | Ghi chú |
+| :--- | :--- | :--- | :--- |
+| **DHT11** | GPIO 5 | Digital | Cần trở kéo lên 10k (nếu module chưa có) |
+| **Relay** | GPIO 18 | Digital Out | Kích mức High/Low tùy loại module |
+| **MQ135** | GPIO 34 | Analog (ADC1) | ESP32 ADC 12-bit (0-4095) |
+| **OLED SDA** | GPIO 21 | I2C Data | |
+| **OLED SCL** | GPIO 22 | I2C Clock | |
+
+---
+
+## 6. Cài Đặt & Triển Khai
 
 ### Yêu cầu tiên quyết
-* **Phần cứng:** ESP32 DevKit V1, DHT11, MQ135, Relay, OLED 0.96".
-* **Phần mềm:** Node.js (v14+), Mosquitto Broker, Arduino IDE.
+* Node.js v14.0 trở lên.
+* Arduino IDE (đã cài board ESP32).
+* MQTT Broker (Mosquitto hoặc dùng Aedes tích hợp sẵn trong code).
 
-### Bước 1: Kết nối phần cứng (Wiring)
-
-| Thiết bị | Chân ESP32 | Chức năng |
-| :--- | :--- | :--- |
-| **DHT11** | GPIO 5 | Đo nhiệt độ, độ ẩm |
-| **Relay** | GPIO 18 | Điều khiển thiết bị (Quạt/Đèn) |
-| **MQ135** | GPIO 34 | Đo chất lượng không khí (Analog) |
-| **OLED SDA** | GPIO 21 | Giao tiếp I2C (Dữ liệu) |
-| **OLED SCL** | GPIO 22 | Giao tiếp I2C (Đồng hồ) |
-
-### Bước 2: Triển khai Server
-Server đóng vai trò trung tâm điều phối.
-
+### Bước 1: Thiết lập Server
 ```bash
-# 1. Di chuyển vào thư mục server
+# Clone repository
+git clone [https://github.com/your-username/iot-smart-home.git](https://github.com/your-username/iot-smart-home.git)
+
+# Di chuyển vào thư mục server
 cd server
 
-# 2. Cài đặt các thư viện phụ thuộc (được liệt kê trong package.json)
+# Cài đặt dependencies
 npm install
 
-# 3. Khởi chạy hệ thống
+# Khởi chạy
 node server.js
 ```
-* Truy cập Dashboard: `http://localhost:3000`
-* Tài khoản mặc định: `admin` / `123`
+Truy cập: `http://localhost:3000`
 
-### Bước 3: Nạp Firmware
-Sử dụng Arduino IDE để nạp code cho ESP32.
-* **Lưu ý:** Lần đầu khởi động, ESP32 sẽ phát WiFi tên **`SETUP_IOT_SYSTEM`**.
-* Kết nối điện thoại vào WiFi đó -> Trình duyệt tự mở trang cấu hình -> Nhập WiFi nhà bạn và IP của máy tính chạy Server.
+### Bước 2: Nạp Firmware
+1. Mở `firmware/esp32_main.ino` bằng Arduino IDE.
+2. Cài đặt thư viện: `WiFiManager`, `PubSubClient`, `ArduinoJson`, `Adafruit SSD1306`.
+3. Chọn board **DOIT ESP32 DEVKIT V1** và nạp code.
 
-### Bước 4: Kiểm thử giả lập (Simulation Tool)
-Hệ thống tích hợp sẵn công cụ giả lập để test giao diện khi chưa có phần cứng. Tool này sẽ tạo ra 8 thiết bị ảo (Hồ cá, Phòng server, Vườn lan...) gửi dữ liệu ngẫu nhiên.
-
-```bash
-# Tại thư mục server, chạy lệnh:
-node virtual_device.js
-```
+### Bước 3: Cấu hình Thiết Bị
+1. Sau khi nạp, ESP32 sẽ phát WiFi: **`SETUP_IOT_SYSTEM`**.
+2. Kết nối điện thoại vào WiFi này.
+3. Trình duyệt tự mở trang cấu hình (Captive Portal).
+4. Nhập SSID/Pass WiFi nhà bạn và IP của máy tính chạy Server.
 
 ---
 
-## 5. Tính năng nâng cao
+## 7. Tính Năng Nâng Cao
 
-1.  **Auto Discovery (Tự động phát hiện):** Bạn không cần khai báo thiết bị trước. Chỉ cần nạp code và bật nguồn ESP32, Server sẽ tự động nhận diện ID thiết bị và hiển thị lên Dashboard.
-2.  **Smart Charting:** Hệ thống tự động phân tích dữ liệu gửi lên. Nếu bạn gửi thêm thông số mới (ví dụ: `pH`, `voltage`), Dashboard sẽ tự động tạo biểu đồ mới tương ứng.
-3.  **Automation Rule Engine:**
-    * Cho phép tạo luật logic: `IF` (Điều kiện) `THEN` (Hành động).
-    * Ví dụ: *Nếu Khí Gas > 300 thì Bật Quạt thông gió.*
-    * Logic này chạy trên Server, đảm bảo hoạt động ngay cả khi người dùng không mở Web.
+* **Auto-Discovery:** Server tự động quét và đăng ký thiết bị mới vào hệ thống Dashboard mà không cần cấu hình thủ công.
+* **Dynamic Charting:** Hệ thống tự động phát hiện kiểu dữ liệu (Nhiệt độ, Độ ẩm, Volt...) và tạo biểu đồ tương ứng.
+* **Rule Engine:** Logic tự động hóa chạy độc lập trên Server, đảm bảo tính ổn định ngay cả khi mất kết nối Internet (nếu chạy Local LAN).
 
-## 6. Đóng góp & Bản quyền
-Dự án được phát triển bởi **[Tên của bạn]**.
-Mã nguồn mở theo giấy phép MIT.
+## 🛡 License
+Dự án được phân phối dưới giấy phép [MIT License](LICENSE).
+
+---
+**Developed by [Tên Của Bạn]**
