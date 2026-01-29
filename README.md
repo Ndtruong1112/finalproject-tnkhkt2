@@ -3,7 +3,7 @@
 ![NodeJS](https://img.shields.io/badge/Node.js-v14+-43853D?style=flat&logo=node.js&logoColor=white)
 ![ESP32](https://img.shields.io/badge/Platform-ESP32-E7352C?style=flat&logo=espressif&logoColor=white)
 ![MQTT](https://img.shields.io/badge/Protocol-MQTT-660066?style=flat)
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
+
 
 > **Hệ thống giám sát và điều khiển nhà thông minh toàn diện (End-to-End), tối ưu hóa cho độ trễ thấp và trải nghiệm người dùng thời gian thực.**
 
