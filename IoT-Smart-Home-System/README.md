@@ -155,4 +155,4 @@ Truy cập: `http://localhost:3000`
 Dự án được phân phối dưới giấy phép [MIT License](LICENSE).
 
 ---
-**Developed by [Tên Của Bạn]**
+**Developed by [MKII&NDT]**
