@@ -1,0 +1,1 @@
+{"ESP32_MQ135_01":{"name":"Khí gas và quạt","status":"online","id":"ESP32_MQ135_01","mq135":262,"relay":"OFF","auto":true,"threshold":500,"lastSeen":1769699431150,"order":1},"ESP32_TramThoiTiet":{"name":"Trạm Thời Tiết","status":"online","id":"ESP32_TramThoiTiet","temp":24.1,"humi":70,"lastSeen":1769699429863,"order":0}}
