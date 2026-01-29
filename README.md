@@ -7,7 +7,7 @@
 
 > **Hệ thống giám sát và điều khiển nhà thông minh toàn diện (End-to-End), tối ưu hóa cho độ trễ thấp và trải nghiệm người dùng thời gian thực.**
 
-![Dashboard Banner](docs/dashboard.png)
+![Dashboard Banner](IoT-Smart-Home-System/docs/dashboard.png)
 
 ## 📑 Mục Lục
 1. [Giới thiệu](#1-giới-thiệu)
@@ -49,7 +49,7 @@ Hệ thống hoạt động dựa trên mô hình **Event-Driven Architecture** 
 ### Sơ đồ khối (Block Diagram)
 Biểu diễn luồng dữ liệu từ Cảm biến -> Vi điều khiển -> Broker -> Server -> Client.
 
-![Block Diagram](docs/block_diagram.png)
+![Block Diagram](IoT-Smart-Home-System/docs/block_diagram.png)
 
 ### Luồng xử lý dữ liệu (Data Flow):
 1.  **Ingestion:** ESP32 thu thập dữ liệu thô từ cảm biến (Analog/Digital).
@@ -94,8 +94,8 @@ Tại sao lại chọn những công nghệ này? Dưới đây là giải thíc
 ### Sơ đồ nguyên lý (Schematic)
 Chi tiết cách đấu nối các module với ESP32.
 
-![Schematic](docs/schematic1.png)
-![Schematic](docs/schematic2.png)
+![Schematic](IoT-Smart-Home-System/docs/schematic1.png)
+![Schematic](IoT-Smart-Home-System/docs/schematic2.png)
 
 ### Bảng đấu nối (Pinout Mapping)
 
