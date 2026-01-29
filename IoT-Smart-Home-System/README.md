@@ -54,7 +54,6 @@ Hệ thống hoạt động dựa trên mô hình **Event-Driven Architecture** 
 Biểu diễn luồng dữ liệu từ Cảm biến -> Vi điều khiển -> Broker -> Server -> Client.
 
 ![Block Diagram](docs/block_diagram.png)
-*(Chèn ảnh sơ đồ khối vào thư mục docs/block_diagram.png)*
 
 ### Luồng xử lý dữ liệu (Data Flow):
 1.  **Ingestion:** ESP32 thu thập dữ liệu thô từ cảm biến (Analog/Digital).
@@ -99,8 +98,8 @@ Tại sao lại chọn những công nghệ này? Dưới đây là giải thíc
 ### Sơ đồ nguyên lý (Schematic)
 Chi tiết cách đấu nối các module với ESP32.
 
-![Schematic](docs/schematic.png)
-*(Chèn ảnh sơ đồ nguyên lý mạch vào thư mục docs/schematic.png)*
+![Schematic](docs/schematic1.png)
+![Schematic](docs/schematic2.png)
 
 ### Bảng đấu nối (Pinout Mapping)
 
