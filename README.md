@@ -118,8 +118,6 @@ Chi tiết cách đấu nối các module với ESP32.
 
 ### Bước 1: Thiết lập Server
 ```bash
-# Clone repository
-git clone [https://github.com/your-username/iot-smart-home.git](https://github.com/your-username/iot-smart-home.git)
 
 # Di chuyển vào thư mục server
 cd server
@@ -152,7 +150,7 @@ Truy cập: `http://localhost:3000`
 * **Rule Engine:** Logic tự động hóa chạy độc lập trên Server, đảm bảo tính ổn định ngay cả khi mất kết nối Internet (nếu chạy Local LAN).
 
 ## 🛡 License
-Dự án được phân phối dưới giấy phép [MIT License](LICENSE).
+Mã nguồn mở theo giấy phép MIT
 
 ---
 **Developed by [MKII&NDT]**
