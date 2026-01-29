@@ -7,7 +7,7 @@
 
 > **Hệ thống giám sát và điều khiển nhà thông minh toàn diện (End-to-End), tối ưu hóa cho độ trễ thấp và trải nghiệm người dùng thời gian thực.**
 
-![Dashboard Banner](docs/dashboard_main.png)
+![Dashboard Banner](docs/dashboard.png)
 
 ## 📑 Mục Lục
 1. [Giới thiệu](#1-giới-thiệu)
