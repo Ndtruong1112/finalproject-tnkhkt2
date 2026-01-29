@@ -37,12 +37,8 @@
 Xem video demo chi tiết về khả năng phản hồi của hệ thống và tính năng tự động hóa:
 
 [![Xem Video Demo](https://img.youtube.com/vi/VIDEO_ID_HERE/0.jpg)](https://www.youtube.com/watch?v=VIDEO_ID_HERE)
-*(Thay `VIDEO_ID_HERE` bằng ID video YouTube của bạn hoặc xóa dòng này nếu chèn file GIF)*
 
-### 📸 Giao diện thực tế
-| Dashboard Grid | Automation Rules | Mobile Responsive |
-| :---: | :---: | :---: |
-| ![Grid](docs/grid_view.png) | ![Rules](docs/rules_view.png) | ![Mobile](docs/mobile_view.png) |
+
 
 ---
 
