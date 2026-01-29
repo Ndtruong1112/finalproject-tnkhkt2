@@ -1,1 +1,572 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart IoT Dashboard V4</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.1/chartjs-plugin-zoom.min.js"></script>
 
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+        }
+
+        .navbar {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: #bbb;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 5px 10px;
+        }
+
+            .tab-btn.active {
+                color: white;
+                border-bottom: 2px solid #3498db;
+                font-weight: bold;
+            }
+
+        .container {
+            padding: 20px;
+            display: none;
+        }
+
+            .container.active {
+                display: block;
+            }
+
+        /* Device Cards */
+        #deviceList {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .card {
+            background: white;
+            width: 300px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+            transition: transform 0.2s;
+        }
+
+            .card:hover {
+                transform: translateY(-3px);
+            }
+
+        .card-header {
+            background: #34495e;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .param-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 4px;
+        }
+
+        .val {
+            font-weight: bold;
+            color: #2980b9;
+        }
+
+        .controls {
+            background: #ecf0f1;
+            padding: 15px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 16px;
+                width: 16px;
+                left: 2px;
+                bottom: 2px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+
+        input:checked + .slider {
+            background-color: #2ecc71;
+        }
+
+            input:checked + .slider:before {
+                transform: translateX(20px);
+            }
+
+        /* GRID CHARTS AREA (CSS MỚI) */
+        #chartsArea {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        /* Widget Biểu Đồ */
+        .chart-box {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            position: relative;
+            /* Mặc định chiếm 48% chiều rộng (2 cột) */
+            width: calc(50% - 10px);
+            transition: width 0.3s ease;
+        }
+
+            /* Khi mở rộng thì chiếm 100% */
+            .chart-box.full-width {
+                width: 100%;
+            }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 10px;
+        }
+
+        .chart-title {
+            font-weight: bold;
+            color: #34495e;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: move;
+        }
+
+        .chart-tools {
+            display: flex;
+            gap: 5px;
+        }
+
+        .tool-btn {
+            cursor: pointer;
+            background: #eee;
+            padding: 5px 8px;
+            border-radius: 4px;
+            border: none;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+            .tool-btn:hover {
+                background: #ddd;
+            }
+
+        @media (max-width: 768px) {
+            .chart-box {
+                width: 100% !important;
+            }
+            /* Mobile thì luôn full */
+        }
+
+        /* Automation & Modal */
+        .rule-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .rule-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 5px solid #e67e22;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 600px;
+            max-width: 90%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h3>IOT DASHBOARD V4</h3>
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('dashboard')">Điều Khiển</button>
+            <button class="tab-btn" onclick="switchTab('charts')">Biểu Đồ</button>
+            <button class="tab-btn" onclick="switchTab('automation')">Tự Động Hóa</button>
+        </div>
+    </div>
+
+    <div id="dashboard" class="container active">
+        <div id="deviceList"></div>
+    </div>
+
+    <div id="charts" class="container">
+        <div style="display:flex; justify-content: space-between; margin-bottom:15px;">
+            <span style="color:#666; font-size:14px;">💡 Kéo thả tiêu đề để sắp xếp. Bấm [⤢] để phóng to.</span>
+            <button class="tool-btn" style="background:#3498db; color:white" onclick="openChartSettings()">⚙️ Quản Lý</button>
+        </div>
+        <div id="chartsArea"></div>
+    </div>
+
+    <div id="automation" class="container">
+        <h3>Thêm Luật Mới</h3>
+        <div class="rule-form">
+            <span>Nếu</span>
+            <select id="r_triggerDev"><option>--Chọn Thiết Bị--</option></select>
+            <select id="r_triggerParam"><option value="temp">Nhiệt độ</option><option value="humi">Độ ẩm</option><option value="mq135">Gas</option></select>
+            <select id="r_condition"><option value=">">Lớn hơn</option><option value="<">Nhỏ hơn</option></select>
+            <input type="number" id="r_value" placeholder="Giá trị" style="width:60px">
+            <span>Thì</span>
+            <select id="r_targetDev"><option>--Chọn Thiết Bị--</option></select>
+            <select id="r_action"><option value="relay:ON">BẬT</option><option value="relay:OFF">TẮT</option></select>
+            <button class="tool-btn" style="background:#27ae60; color:white" onclick="addRule()">Lưu</button>
+        </div>
+        <div id="ruleList"></div>
+    </div>
+
+    <div id="chartModal" class="modal">
+        <div class="modal-content">
+            <h3>Cấu Hình Biểu Đồ</h3>
+            <table>
+                <thead><tr><th>ID Gốc</th><th>Tên Hiển Thị</th><th>Hiện?</th></tr></thead>
+                <tbody id="chartSettingsBody"></tbody>
+            </table>
+            <div style="margin-top:20px; text-align:right;">
+                <button class="tool-btn" onclick="saveChartConfig()" style="background:#3498db; color:white">Lưu & Áp dụng</button>
+                <button class="tool-btn" onclick="document.getElementById('chartModal').style.display='none'">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let devicesData = {};
+        let chartData = {};
+        let chartConfig = {};
+        let myCharts = {};
+
+        // 1. DASHBOARD & DEVICES
+        const devContainer = document.getElementById('deviceList');
+        new Sortable(devContainer, { animation: 150, onEnd: () => { /* Save order logic if needed */ } });
+
+        socket.on('update_ui', (devices) => {
+        devicesData = devices;
+        renderDashboard();
+        updateDropdowns();
+        });
+
+        function renderDashboard() {
+        devContainer.innerHTML = '';
+        for (const [id, d] of Object.entries(devicesData)) {
+        let params = '';
+        const ignores = ['id','name','status','order','relay','auto','threshold','lastSeen'];
+        for(const [k, v] of Object.entries(d)) {
+        if(!ignores.includes(k) && typeof v === 'number') {
+        let unit = k==='temp'?'°C':(k==='humi'?'%':'');
+        params += `<div class="param-row"><span>${k}</span><span class="val">${v}${unit}</span></div>`;
+        }
+        }
+
+        let controls = '';
+        if(d.relay) {
+        const isAuto = d.auto === true;
+        controls = `
+        <div class="controls">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <span>Auto Mode</span>
+        <label class="switch"><input type="checkbox" ${isAuto?'checked':''} onchange="sendCmd('${id}', {auto: this.checked})"><span class="slider"></span></label>
+        </div>
+        <div style="display:flex; justify-content:space-between; opacity:${isAuto?0.5:1}; pointer-events:${isAuto?'none':'auto'}">
+        <span>Quạt/Đèn</span>
+        <label class="switch"><input type="checkbox" ${d.relay==='ON'?'checked':''} onchange="sendCmd('${id}', {relay: this.checked?'ON':'OFF'})"><span class="slider"></span></label>
+        </div>
+        </div>`;
+        }
+
+        devContainer.innerHTML += `
+        <div class="card">
+        <div class="card-header">
+        <span>${d.name} <span style="font-size:12px; cursor:pointer" onclick="renameDevice('${id}')">✏️</span></span>
+        <div style="width:10px; height:10px; border-radius:50%; background:${d.status==='online'?'#2ecc71':'#e74c3c'}"></div>
+        </div>
+        <div class="card-body">${params}</div>
+        ${controls}
+        </div>`;
+        }
+        }
+        function sendCmd(id, obj) { socket.emit('change_settings', { id, settings: obj }); }
+        function renameDevice(id) {
+        const n = prompt("Tên mới:", devicesData[id].name);
+        if(n) fetch('/api/rename', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, newName:n})});
+        }
+
+        // 2. CHART WIDGETS (CORE V4)
+        const chartArea = document.getElementById('chartsArea');
+        // Kích hoạt kéo thả cho biểu đồ
+        new Sortable(chartArea, {
+        animation: 150,
+        handle: '.chart-title', // Chỉ kéo được khi nắm vào tiêu đề
+        onEnd: function() { saveChartLayout(); }
+        });
+
+        socket.on('init_chart', (data) => {
+        chartData = data.history;
+        chartConfig = data.chartConfig || {};
+        renderCharts();
+        });
+
+        socket.on('update_chart_data', (data) => {
+        chartData = data.history;
+        if(data.chartConfig) chartConfig = data.chartConfig;
+
+        for (const [key, points] of Object.entries(chartData)) {
+        if(myCharts[key]) {
+        const chart = myCharts[key];
+        chart.data.labels = points.map(p => p.t);
+        chart.data.datasets[0].data = points.map(p => p.v);
+        chart.update('none');
+        } else {
+        renderCharts(); // Vẽ lại nếu có biểu đồ mới
+        }
+        }
+        });
+
+        socket.on('update_chart_config', (cfg) => { chartConfig = cfg; renderCharts(); });
+
+        function renderCharts() {
+        // Sắp xếp theo thứ tự order
+        const keys = Object.keys(chartData).sort((a,b) => (chartConfig[a]?.order || 0) - (chartConfig[b]?.order || 0));
+
+        // Xóa những chart không còn tồn tại hoặc bị ẩn
+        const currentIds = [];
+        keys.forEach(key => {
+        const cfg = chartConfig[key] || { visible: true };
+        if(!cfg.visible) return;
+
+        currentIds.push(key);
+        if(document.getElementById(`box_${key}`)) return; // Đã có rồi thì thôi
+
+        // Tạo Widget mới
+        const div = document.createElement('div');
+        div.id = `box_${key}`;
+        div.className = `chart-box ${cfg.size === 'full' ? 'full-width' : ''}`;
+        div.setAttribute('data-key', key);
+        div.innerHTML = `
+        <div class="chart-header">
+        <div class="chart-title">::: ${cfg.alias || key}</div>
+        <div class="chart-tools">
+        <button class="tool-btn" onclick="resetZoom('${key}')">🔍 Reset</button>
+        <button class="tool-btn" onclick="toggleSize('${key}')">⤢</button>
+        </div>
+        </div>
+        <div style="position: relative; height:200px">
+        <canvas id="canvas_${key}"></canvas>
+        </div>
+        `;
+        chartArea.appendChild(div);
+
+        const ctx = document.getElementById(`canvas_${key}`).getContext('2d');
+        myCharts[key] = new Chart(ctx, {
+        type: 'line',
+        data: {
+        labels: chartData[key].map(p=>p.t),
+        datasets: [{
+        label: 'Giá trị',
+        data: chartData[key].map(p=>p.v),
+        borderColor: '#3498db',
+        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+        fill: true,
+        tension: 0.3
+        }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { zoom: { zoom: { wheel: { enabled: true }, mode: 'x' }, pan: { enabled: true, mode: 'x' } } }
+        }
+        });
+        });
+
+        // Xóa các chart dư thừa (do bị ẩn đi)
+        Array.from(chartArea.children).forEach(child => {
+        const k = child.getAttribute('data-key');
+        if(!currentIds.includes(k)) child.remove();
+        });
+        }
+
+        function toggleSize(key) {
+        const box = document.getElementById(`box_${key}`);
+        box.classList.toggle('full-width');
+        // Lưu trạng thái size
+        const isFull = box.classList.contains('full-width');
+        if(!chartConfig[key]) chartConfig[key] = {};
+        chartConfig[key].size = isFull ? 'full' : 'half';
+        saveChartLayout();
+        }
+
+        function resetZoom(key) { if(myCharts[key]) myCharts[key].resetZoom(); }
+
+        function saveChartLayout() {
+        // Lưu thứ tự và size
+        const children = Array.from(chartArea.children);
+        const newConfig = { ...chartConfig };
+
+        children.forEach((child, index) => {
+        const key = child.getAttribute('data-key');
+        if(!newConfig[key]) newConfig[key] = {};
+        newConfig[key].order = index;
+        newConfig[key].size = child.classList.contains('full-width') ? 'full' : 'half';
+        });
+
+        fetch('/api/chart-config', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(newConfig)
+        });
+        }
+
+        // 3. SETTINGS MODAL
+        function openChartSettings() {
+        const tbody = document.getElementById('chartSettingsBody');
+        tbody.innerHTML = '';
+        for (const key of Object.keys(chartData)) {
+        const cfg = chartConfig[key] || { visible: true, alias: key };
+        tbody.innerHTML += `
+        <tr data-key="${key}">
+        <td style="font-size:12px; color:#888">${key}</td>
+        <td><input type="text" class="alias-input" value="${cfg.alias}" style="width:100%"></td>
+        <td><input type="checkbox" class="vis-check" ${cfg.visible?'checked':''}></td>
+        </tr>`;
+        }
+        document.getElementById('chartModal').style.display = 'block';
+        }
+
+        function saveChartConfig() {
+        const rows = document.querySelectorAll('#chartSettingsBody tr');
+        const newConfig = { ...chartConfig };
+        rows.forEach(row => {
+        const key = row.getAttribute('data-key');
+        if(!newConfig[key]) newConfig[key] = {};
+        newConfig[key].alias = row.querySelector('.alias-input').value;
+        newConfig[key].visible = row.querySelector('.vis-check').checked;
+        });
+
+        fetch('/api/chart-config', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(newConfig) })
+        .then(() => document.getElementById('chartModal').style.display = 'none');
+        }
+
+        function switchTab(id) {
+        document.querySelectorAll('.container').forEach(c=>c.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        event.target.classList.add('active');
+        }
+        function updateDropdowns() {
+        const s1=document.getElementById('r_triggerDev'), s2=document.getElementById('r_targetDev');
+        if(s1.options.length>1)return;
+        for(const[id,d] of Object.entries(devicesData)) {
+        const opt=`<option value="${id}">${d.name}</option>`;
+        s1.innerHTML+=opt; s2.innerHTML+=opt;
+        }
+        loadRules();
+        }
+        async function loadRules(){
+        const r=await(await fetch('/api/rules')).json();
+        document.getElementById('ruleList').innerHTML = r.map(x=>`<div class="rule-item"><span>${x.name}</span><button class="tool-btn" style="background:#c0392b;color:white" onclick="deleteRule(${x.id})">Xóa</button></div>`).join('');
+        }
+        function addRule(){
+        const r={name:"Rule "+Date.now(), triggerDevice:document.getElementById('r_triggerDev').value, triggerParam:document.getElementById('r_triggerParam').value, condition:document.getElementById('r_condition').value, value:document.getElementById('r_value').value, targetDevice:document.getElementById('r_targetDev').value, action:document.getElementById('r_action').value};
+        fetch('/api/rules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)}).then(loadRules);
+        }
+        function deleteRule(id){ fetch(`/api/rules/${id}`,{method:'DELETE'}).then(loadRules); }
+    </script>
+</body>
+</html>
