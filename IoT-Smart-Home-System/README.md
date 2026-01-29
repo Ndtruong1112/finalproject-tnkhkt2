@@ -46,9 +46,6 @@ Dự án sử dụng giao thức **MQTT** để giao tiếp thời gian thực, 
 Yêu cầu: Đã cài đặt [Node.js](https://nodejs.org/) và [Mosquitto](https://mosquitto.org/) (hoặc dùng Broker tích hợp).
 
 ```bash
-# Clone dự án
-git clone [https://github.com/your-username/iot-smart-home.git](https://github.com/your-username/iot-smart-home.git)
-cd iot-smart-home/server
 
 # Cài đặt thư viện
 npm install express socket.io mqtt fs-extra body-parser express-session
