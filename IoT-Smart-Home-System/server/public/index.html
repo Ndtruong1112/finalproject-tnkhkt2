@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart IoT Dashboard V4.3 (Scroll Fix)</title>
+    <title>Smart IoT Dashboard V4.5 (Filter)</title>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,88 +11,355 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.1/chartjs-plugin-zoom.min.js"></script>
 
     <style>
-        * { box-sizing: border-box; } 
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; }
-        
-        /* Navbar */
-        .navbar { background: #2c3e50; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-        .nav-left { display: flex; align-items: center; gap: 20px; }
-        .nav-tabs { display: flex; gap: 5px; }
-        .tab-btn { background: none; border: none; color: #bbb; cursor: pointer; font-size: 15px; padding: 8px 12px; border-radius: 4px; transition: 0.3s; }
-        .tab-btn:hover { background: rgba(255,255,255,0.1); color: white; }
-        .tab-btn.active { color: white; background: #3498db; font-weight: bold; }
-        
-        .user-menu { display: flex; gap: 10px; }
-        .btn-user { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; color: white; }
-        .btn-pass { background: #16a085; }
-        .btn-logout { background: #c0392b; text-decoration: none; display: inline-block; }
+        * {
+            box-sizing: border-box;
+        }
 
-        .container { padding: 20px; display: none; max-width: 1400px; margin: 0 auto; }
-        .container.active { display: block; }
-        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 5px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: #bbb;
+            cursor: pointer;
+            font-size: 15px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+
+            .tab-btn:hover {
+                background: rgba(255,255,255,0.1);
+                color: white;
+            }
+
+            .tab-btn.active {
+                color: white;
+                background: #3498db;
+                font-weight: bold;
+            }
+
+        /* Filter Control trong Navbar */
+        .filter-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            background: rgba(0,0,0,0.2);
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+            .filter-control input {
+                cursor: pointer;
+                width: 16px;
+                height: 16px;
+            }
+
+        .user-menu {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-user {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            color: white;
+        }
+
+        .btn-pass {
+            background: #16a085;
+        }
+
+        .btn-logout {
+            background: #c0392b;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .container {
+            padding: 20px;
+            display: none;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+            .container.active {
+                display: block;
+            }
+
         /* Dashboard Cards */
-        #deviceList { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
-        .card { background: white; width: 300px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; position: relative; margin-bottom: 0; }
-        .card-header { background: #34495e; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; cursor: grab; }
-        .card-header:active { cursor: grabbing; }
-        .card-body { padding: 20px; }
-        .param-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px dashed #eee; padding-bottom: 4px; }
-        .val { font-weight: bold; color: #2980b9; }
-        .controls { background: #ecf0f1; padding: 15px; }
-        
-        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #2ecc71; }
-        input:checked + .slider:before { transform: translateX(20px); }
+        #deviceList {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .card {
+            background: white;
+            width: 300px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 0;
+            transition: all 0.3s ease;
+        }
+
+        .card-header {
+            background: #34495e;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: grab;
+        }
+
+            .card-header:active {
+                cursor: grabbing;
+            }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .param-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 4px;
+        }
+
+        .val {
+            font-weight: bold;
+            color: #2980b9;
+        }
+
+        .controls {
+            background: #ecf0f1;
+            padding: 15px;
+        }
+
+        /* Switch CSS */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 16px;
+                width: 16px;
+                left: 2px;
+                bottom: 2px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+
+        input:checked + .slider {
+            background-color: #2ecc71;
+        }
+
+            input:checked + .slider:before {
+                transform: translateX(20px);
+            }
 
         /* Chart Grid */
-        #chartsArea { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; }
-        .chart-box { 
-            background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
-            width: calc(50% - 10px); transition: all 0.3s ease; position: relative;
+        #chartsArea {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
         }
-        .chart-box.full-width { width: 100%; }
-        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
-        .chart-title { font-weight: bold; color: #34495e; cursor: move; }
-        .tool-btn { cursor: pointer; background: #eee; padding: 5px 8px; border-radius: 4px; border: none; font-size: 14px; }
-        .canvas-container { position: relative; height: 250px; transition: height 0.3s ease; width: 100%; }
-        .chart-box.full-width .canvas-container { height: 500px; }
 
-        @media (max-width: 768px) { .chart-box { width: 100% !important; } }
+        .chart-box {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            width: calc(50% - 10px);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+            .chart-box.full-width {
+                width: 100%;
+            }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 10px;
+        }
+
+        .chart-title {
+            font-weight: bold;
+            color: #34495e;
+            cursor: move;
+        }
+
+        .tool-btn {
+            cursor: pointer;
+            background: #eee;
+            padding: 5px 8px;
+            border-radius: 4px;
+            border: none;
+            font-size: 14px;
+        }
+
+        .canvas-container {
+            position: relative;
+            height: 250px;
+            transition: height 0.3s ease;
+            width: 100%;
+        }
+
+        .chart-box.full-width .canvas-container {
+            height: 500px;
+        }
+
+        @media (max-width: 768px) {
+            .chart-box {
+                width: 100% !important;
+            }
+        }
 
         /* Automation & Modal */
-        .rule-form { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .rule-item { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 5px solid #e67e22; display: flex; justify-content: space-between; }
-        
-        .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-        
-        /* --- ĐÂY LÀ PHẦN ĐÃ SỬA --- */
-        .modal-content { 
-            background-color: white; 
-            margin: 5% auto; /* Đẩy lên cao hơn chút */
-            padding: 20px; 
-            border-radius: 8px; 
-            width: 600px; 
-            max-width: 90%; 
-            
-            /* THÊM 2 DÒNG NÀY ĐỂ FIX LỖI */
-            max-height: 85vh; /* Giới hạn chiều cao tối đa 85% màn hình */
-            overflow-y: auto; /* Tự động hiện thanh cuộn khi danh sách dài */
-            
+        .rule-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .rule-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 5px solid #e67e22;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 600px;
+            max-width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
         }
-        /* -------------------------- */
 
-        .modal input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
-        .modal-footer { margin-top: 15px; text-align: right; padding-top: 10px; border-top: 1px solid #eee; }
-        
-        /* Bảng trong modal */
-        .settings-table { width: 100%; border-collapse: collapse; }
-        .settings-table th { text-align: left; padding: 10px; background: #f8f9fa; position: sticky; top: 0; }
-        .settings-table td { padding: 10px; border-bottom: 1px solid #eee; }
+        .modal input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .modal-footer {
+            margin-top: 15px;
+            text-align: right;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .settings-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+            .settings-table th {
+                text-align: left;
+                padding: 10px;
+                background: #f8f9fa;
+                position: sticky;
+                top: 0;
+            }
+
+            .settings-table td {
+                padding: 10px;
+                border-bottom: 1px solid #eee;
+            }
     </style>
 </head>
 <body>
@@ -105,7 +372,13 @@
                 <button class="tab-btn" onclick="switchTab('charts')">Biểu Đồ</button>
                 <button class="tab-btn" onclick="switchTab('automation')">Tự Động Hóa</button>
             </div>
+
+            <label class="filter-control">
+                <input type="checkbox" id="chkShowOffline" checked onchange="toggleOffline(this.checked)">
+                <span>Hiện Offline</span>
+            </label>
         </div>
+
         <div class="user-menu">
             <button class="btn-user btn-pass" onclick="openPassModal()">🔑 Đổi Mật Khẩu</button>
             <a href="/logout" class="btn-user btn-logout">🚪 Thoát</a>
@@ -170,85 +443,118 @@
     <script>
         const socket = io();
         let devicesData = {};
-        let chartData = {}; 
-        let chartConfig = {}; 
-        let myCharts = {}; 
+        let chartData = {};
+        let chartConfig = {};
+        let myCharts = {};
         let isFirstRender = true;
 
-        // --- CORE LOGIC ---
+        // --- LOGIC LỌC OFFLINE ---
+        // Lấy trạng thái từ LocalStorage (mặc định là true/hiện)
+        let showOffline = localStorage.getItem('showOffline') !== 'false';
+        document.getElementById('chkShowOffline').checked = showOffline;
+
+        function toggleOffline(checked) {
+        showOffline = checked;
+        localStorage.setItem('showOffline', checked); // Lưu lại
+        renderDashboard(); // Vẽ lại ngay
+        }
+
+        // --- DASHBOARD LOGIC ---
         const devContainer = document.getElementById('deviceList');
-        new Sortable(devContainer, { 
-            animation: 150, handle: '.card-header',
-            onEnd: function (evt) {
-                const newOrder = Array.from(devContainer.children).map(el => el.getAttribute('data-id'));
-                newOrder.forEach((id, index) => { if(devicesData[id]) devicesData[id].order = index; });
-                fetch('/api/reorder', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(newOrder) });
-            }
+        new Sortable(devContainer, {
+        animation: 150, handle: '.card-header',
+        onEnd: function (evt) {
+        const newOrder = Array.from(devContainer.children).map(el => el.getAttribute('data-id'));
+        newOrder.forEach((id, index) => { if(devicesData[id]) devicesData[id].order = index; });
+        fetch('/api/reorder', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(newOrder) });
+        }
         });
 
         socket.on('update_ui', (devices) => {
-            devicesData = devices;
-            renderDashboard();
-            updateDropdowns();
+        devicesData = devices;
+        renderDashboard();
+        updateDropdowns();
         });
 
         function renderDashboard() {
-            if(isFirstRender) {
-                const sortedArr = Object.entries(devicesData).sort(([,a],[,b]) => (a.order || 0) - (b.order || 0));
-                devContainer.innerHTML = '';
-                sortedArr.forEach(([id, d]) => createOrUpdateCard(id, d));
-                isFirstRender = false;
-            } else {
-                for (const [id, d] of Object.entries(devicesData)) createOrUpdateCard(id, d);
-            }
+        if(isFirstRender) {
+        // Lần đầu: Vẽ lại hết
+        devContainer.innerHTML = '';
+        const sortedArr = Object.entries(devicesData).sort(([,a],[,b]) => (a.order || 0) - (b.order || 0));
+        sortedArr.forEach(([id, d]) => createOrUpdateCard(id, d));
+        isFirstRender = false;
+        } else {
+        // Lần sau: Duyệt qua tất cả data
+        // 1. Cập nhật hoặc Thêm mới
+        for (const [id, d] of Object.entries(devicesData)) {
+        createOrUpdateCard(id, d);
+        }
+        // 2. Xóa các thẻ không còn trong data (hoặc bị ẩn)
+        const allCards = document.querySelectorAll('.card');
+        allCards.forEach(card => {
+        const id = card.getAttribute('data-id');
+        // Nếu id không còn trong data, hoặc (đang offline VÀ đang chế độ ẩn) -> Xóa
+        if (!devicesData[id] || (devicesData[id].status === 'offline' && !showOffline)) {
+        card.remove();
+        }
+        });
+        }
         }
 
         function createOrUpdateCard(id, d) {
-            let params = '';
-            const ignores = ['id','name','status','order','relay','auto','threshold','lastSeen'];
-            for(const [k, v] of Object.entries(d)) {
-                if(!ignores.includes(k) && typeof v === 'number') {
-                    let unit = k==='temp'?'°C':(k==='humi'?'%':'');
-                    params += `<div class="param-row"><span>${k}</span><span class="val">${v}${unit}</span></div>`;
-                }
-            }
-            let controls = '';
-            if(d.relay) {
-                const isAuto = d.auto === true;
-                controls = `
-                <div class="controls">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                        <span>Auto Mode</span>
-                        <label class="switch"><input type="checkbox" ${isAuto?'checked':''} onchange="sendCmd('${id}', {auto: this.checked})"><span class="slider"></span></label>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; opacity:${isAuto?0.5:1}; pointer-events:${isAuto?'none':'auto'}">
-                        <span>Quạt/Đèn</span>
-                        <label class="switch"><input type="checkbox" ${d.relay==='ON'?'checked':''} onchange="sendCmd('${id}', {relay: this.checked?'ON':'OFF'})"><span class="slider"></span></label>
-                    </div>
-                </div>`;
-            }
-            const innerHTML = `
-                <div class="card-header">
-                    <span>${d.name} <span style="font-size:12px; cursor:pointer" onclick="renameDevice('${id}')">✏️</span></span>
-                    <div style="width:10px; height:10px; border-radius:50%; background:${d.status==='online'?'#2ecc71':'#e74c3c'}"></div>
-                </div>
-                <div class="card-body">${params}</div>
-                ${controls}
-            `;
-            let card = document.querySelector(`.card[data-id="${id}"]`);
-            if (card) { if(card.innerHTML !== innerHTML) card.innerHTML = innerHTML; } 
-            else {
-                const newCard = document.createElement('div');
-                newCard.className = 'card';
-                newCard.setAttribute('data-id', id);
-                newCard.innerHTML = innerHTML;
-                devContainer.appendChild(newCard);
-            }
+        // QUAN TRỌNG: Kiểm tra Lọc
+        if (!showOffline && d.status === 'offline') {
+        // Nếu đang ẩn Offline -> Tìm thẻ cũ xóa đi (nếu có) rồi thoát
+        const existing = document.querySelector(`.card[data-id="${id}"]`);
+        if(existing) existing.remove();
+        return;
+        }
+
+        let params = '';
+        const ignores = ['id','name','status','order','relay','auto','threshold','lastSeen'];
+        for(const [k, v] of Object.entries(d)) {
+        if(!ignores.includes(k) && typeof v === 'number') {
+        let unit = k==='temp'?'°C':(k==='humi'?'%':'');
+        params += `<div class="param-row"><span>${k}</span><span class="val">${v}${unit}</span></div>`;
+        }
+        }
+        let controls = '';
+        if(d.relay) {
+        const isAuto = d.auto === true;
+        controls = `
+        <div class="controls">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <span>Auto Mode</span>
+        <label class="switch"><input type="checkbox" ${isAuto?'checked':''} onchange="sendCmd('${id}', {auto: this.checked})"><span class="slider"></span></label>
+        </div>
+        <div style="display:flex; justify-content:space-between; opacity:${isAuto?0.5:1}; pointer-events:${isAuto?'none':'auto'}">
+        <span>Quạt/Đèn</span>
+        <label class="switch"><input type="checkbox" ${d.relay==='ON'?'checked':''} onchange="sendCmd('${id}', {relay: this.checked?'ON':'OFF'})"><span class="slider"></span></label>
+        </div>
+        </div>`;
+        }
+        const innerHTML = `
+        <div class="card-header">
+        <span>${d.name} <span style="font-size:12px; cursor:pointer" onclick="renameDevice('${id}')">✏️</span></span>
+        <div style="width:10px; height:10px; border-radius:50%; background:${d.status==='online'?'#2ecc71':'#e74c3c'}"></div>
+        </div>
+        <div class="card-body">${params}</div>
+        ${controls}
+        `;
+        let card = document.querySelector(`.card[data-id="${id}"]`);
+        if (card) { if(card.innerHTML !== innerHTML) card.innerHTML = innerHTML; }
+        else {
+        const newCard = document.createElement('div');
+        newCard.className = 'card';
+        newCard.setAttribute('data-id', id);
+        newCard.innerHTML = innerHTML;
+        devContainer.appendChild(newCard);
+        }
         }
         function sendCmd(id, obj) { socket.emit('change_settings', { id, settings: obj }); }
         function renameDevice(id) {
-            const n = prompt("Tên mới:", devicesData[id].name);
-            if(n) fetch('/api/rename', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, newName:n})});
+        const n = prompt("Tên mới:", devicesData[id].name);
+        if(n) fetch('/api/rename', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, newName:n})});
         }
 
         // --- CHART LOGIC ---
@@ -256,116 +562,116 @@
         new Sortable(chartArea, { animation: 150, handle: '.chart-title', onEnd: function() { saveChartLayout(); } });
 
         socket.on('init_chart', (data) => {
-            chartData = data.history; chartConfig = data.chartConfig || {}; renderCharts();
+        chartData = data.history; chartConfig = data.chartConfig || {}; renderCharts();
         });
         socket.on('update_chart_data', (data) => {
-            chartData = data.history; if(data.chartConfig) chartConfig = data.chartConfig;
-            for (const [key, points] of Object.entries(chartData)) {
-                if(myCharts[key]) {
-                    myCharts[key].data.labels = points.map(p => p.t);
-                    myCharts[key].data.datasets[0].data = points.map(p => p.v);
-                    myCharts[key].update('none'); 
-                } else renderCharts();
-            }
+        chartData = data.history; if(data.chartConfig) chartConfig = data.chartConfig;
+        for (const [key, points] of Object.entries(chartData)) {
+        if(myCharts[key]) {
+        myCharts[key].data.labels = points.map(p => p.t);
+        myCharts[key].data.datasets[0].data = points.map(p => p.v);
+        myCharts[key].update('none');
+        } else renderCharts();
+        }
         });
         socket.on('update_chart_config', (cfg) => { chartConfig = cfg; renderCharts(); });
 
         function renderCharts() {
-            const keys = Object.keys(chartData).sort((a,b) => (chartConfig[a]?.order || 0) - (chartConfig[b]?.order || 0));
-            const activeKeys = [];
-            keys.forEach(key => {
-                const cfg = chartConfig[key] || { visible: true };
-                if(!cfg.visible) return;
-                activeKeys.push(key);
-                let div = document.getElementById(`box_${key}`);
-                if (div) {
-                    if(cfg.size === 'full' && !div.classList.contains('full-width')) div.classList.add('full-width');
-                    if(cfg.size !== 'full' && div.classList.contains('full-width')) div.classList.remove('full-width');
-                    return; 
-                }
-                div = document.createElement('div');
-                div.id = `box_${key}`;
-                div.className = `chart-box ${cfg.size === 'full' ? 'full-width' : ''}`;
-                div.setAttribute('data-key', key);
-                div.innerHTML = `
-                    <div class="chart-header">
-                        <div class="chart-title">::: ${cfg.alias || key}</div>
-                        <div class="chart-tools">
-                            <button class="tool-btn" onclick="resetZoom('${key}')">Reset</button>
-                            <button class="tool-btn" onclick="toggleSize('${key}')">⤢</button>
-                        </div>
-                    </div>
-                    <div class="canvas-container"><canvas id="canvas_${key}"></canvas></div>
-                `;
-                chartArea.appendChild(div);
-                const ctx = document.getElementById(`canvas_${key}`).getContext('2d');
-                myCharts[key] = new Chart(ctx, {
-                    type: 'line',
-                    data: { labels: chartData[key].map(p=>p.t), datasets: [{ label: 'Giá trị', data: chartData[key].map(p=>p.v), borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.1)', fill: true, tension: 0.3 }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { zoom: { zoom: { wheel: { enabled: true }, mode: 'x' }, pan: { enabled: true, mode: 'x' } } } }
-                });
-            });
-            Array.from(chartArea.children).forEach(child => { if(!activeKeys.includes(child.getAttribute('data-key'))) child.remove(); });
+        const keys = Object.keys(chartData).sort((a,b) => (chartConfig[a]?.order || 0) - (chartConfig[b]?.order || 0));
+        const activeKeys = [];
+        keys.forEach(key => {
+        const cfg = chartConfig[key] || { visible: true };
+        if(!cfg.visible) return;
+        activeKeys.push(key);
+        let div = document.getElementById(`box_${key}`);
+        if (div) {
+        if(cfg.size === 'full' && !div.classList.contains('full-width')) div.classList.add('full-width');
+        if(cfg.size !== 'full' && div.classList.contains('full-width')) div.classList.remove('full-width');
+        return;
+        }
+        div = document.createElement('div');
+        div.id = `box_${key}`;
+        div.className = `chart-box ${cfg.size === 'full' ? 'full-width' : ''}`;
+        div.setAttribute('data-key', key);
+        div.innerHTML = `
+        <div class="chart-header">
+        <div class="chart-title">::: ${cfg.alias || key}</div>
+        <div class="chart-tools">
+        <button class="tool-btn" onclick="resetZoom('${key}')">Reset</button>
+        <button class="tool-btn" onclick="toggleSize('${key}')">⤢</button>
+        </div>
+        </div>
+        <div class="canvas-container"><canvas id="canvas_${key}"></canvas></div>
+        `;
+        chartArea.appendChild(div);
+        const ctx = document.getElementById(`canvas_${key}`).getContext('2d');
+        myCharts[key] = new Chart(ctx, {
+        type: 'line',
+        data: { labels: chartData[key].map(p=>p.t), datasets: [{ label: 'Giá trị', data: chartData[key].map(p=>p.v), borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.1)', fill: true, tension: 0.3 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { zoom: { zoom: { wheel: { enabled: true }, mode: 'x' }, pan: { enabled: true, mode: 'x' } } } }
+        });
+        });
+        Array.from(chartArea.children).forEach(child => { if(!activeKeys.includes(child.getAttribute('data-key'))) child.remove(); });
         }
         function toggleSize(key) {
-            const box = document.getElementById(`box_${key}`); box.classList.toggle('full-width');
-            const isFull = box.classList.contains('full-width');
-            if(!chartConfig[key]) chartConfig[key] = {}; chartConfig[key].size = isFull ? 'full' : 'half';
-            saveChartLayout();
+        const box = document.getElementById(`box_${key}`); box.classList.toggle('full-width');
+        const isFull = box.classList.contains('full-width');
+        if(!chartConfig[key]) chartConfig[key] = {}; chartConfig[key].size = isFull ? 'full' : 'half';
+        saveChartLayout();
         }
         function saveChartLayout() {
-            const newConfig = { ...chartConfig };
-            Array.from(chartArea.children).forEach((child, index) => {
-                const key = child.getAttribute('data-key'); if(!newConfig[key]) newConfig[key] = {};
-                newConfig[key].order = index; newConfig[key].size = child.classList.contains('full-width') ? 'full' : 'half';
-            });
-            fetch('/api/chart-config', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(newConfig) });
+        const newConfig = { ...chartConfig };
+        Array.from(chartArea.children).forEach((child, index) => {
+        const key = child.getAttribute('data-key'); if(!newConfig[key]) newConfig[key] = {};
+        newConfig[key].order = index; newConfig[key].size = child.classList.contains('full-width') ? 'full' : 'half';
+        });
+        fetch('/api/chart-config', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(newConfig) });
         }
         function resetZoom(key) { if(myCharts[key]) myCharts[key].resetZoom(); }
 
         // --- UTILS ---
         function openPassModal() { document.getElementById('passModal').style.display = 'block'; }
         async function changePass() {
-            const newUser = document.getElementById('newUser').value; const oldPass = document.getElementById('oldPass').value; const newPass = document.getElementById('newPass').value;
-            if(!newUser || !oldPass || !newPass) return alert("Thiếu thông tin");
-            const res = await fetch('/change-password', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ oldPass, newPass, newUser }) });
-            const data = await res.json(); alert(data.msg); if(data.success) location.reload();
+        const newUser = document.getElementById('newUser').value; const oldPass = document.getElementById('oldPass').value; const newPass = document.getElementById('newPass').value;
+        if(!newUser || !oldPass || !newPass) return alert("Thiếu thông tin");
+        const res = await fetch('/change-password', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ oldPass, newPass, newUser }) });
+        const data = await res.json(); alert(data.msg); if(data.success) location.reload();
         }
         function switchTab(id) {
-            document.querySelectorAll('.container').forEach(c=>c.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-            event.target.classList.add('active');
+        document.querySelectorAll('.container').forEach(c=>c.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        event.target.classList.add('active');
         }
         function openChartSettings() {
-            const tbody = document.getElementById('chartSettingsBody'); tbody.innerHTML = '';
-            for (const key of Object.keys(chartData)) {
-                const cfg = chartConfig[key] || { visible: true, alias: key };
-                tbody.innerHTML += `<tr data-key="${key}"><td>${key}</td><td><input class="alias-input" value="${cfg.alias}"></td><td><input type="checkbox" class="vis-check" ${cfg.visible?'checked':''}></td></tr>`;
-            }
-            document.getElementById('chartModal').style.display = 'block';
+        const tbody = document.getElementById('chartSettingsBody'); tbody.innerHTML = '';
+        for (const key of Object.keys(chartData)) {
+        const cfg = chartConfig[key] || { visible: true, alias: key };
+        tbody.innerHTML += `<tr data-key="${key}"><td>${key}</td><td><input class="alias-input" value="${cfg.alias}"></td><td><input type="checkbox" class="vis-check" ${cfg.visible?'checked':''}></td></tr>`;
+        }
+        document.getElementById('chartModal').style.display = 'block';
         }
         function saveChartConfig() {
-            const newConfig = { ...chartConfig };
-            document.querySelectorAll('#chartSettingsBody tr').forEach(row => {
-                const key = row.getAttribute('data-key'); if(!newConfig[key]) newConfig[key] = {};
-                newConfig[key].alias = row.querySelector('.alias-input').value; newConfig[key].visible = row.querySelector('.vis-check').checked;
-            });
-            fetch('/api/chart-config', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(newConfig) })
-            .then(() => document.getElementById('chartModal').style.display = 'none');
+        const newConfig = { ...chartConfig };
+        document.querySelectorAll('#chartSettingsBody tr').forEach(row => {
+        const key = row.getAttribute('data-key'); if(!newConfig[key]) newConfig[key] = {};
+        newConfig[key].alias = row.querySelector('.alias-input').value; newConfig[key].visible = row.querySelector('.vis-check').checked;
+        });
+        fetch('/api/chart-config', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(newConfig) })
+        .then(() => document.getElementById('chartModal').style.display = 'none');
         }
-        function updateDropdowns() { 
-            const s1=document.getElementById('r_triggerDev'), s2=document.getElementById('r_targetDev'); if(s1.options.length>1)return;
-            for(const[id,d] of Object.entries(devicesData)) { const opt=`<option value="${id}">${d.name}</option>`; s1.innerHTML+=opt; s2.innerHTML+=opt; }
-            loadRules();
+        function updateDropdowns() {
+        const s1=document.getElementById('r_triggerDev'), s2=document.getElementById('r_targetDev'); if(s1.options.length>1)return;
+        for(const[id,d] of Object.entries(devicesData)) { const opt=`<option value="${id}">${d.name}</option>`; s1.innerHTML+=opt; s2.innerHTML+=opt; }
+        loadRules();
         }
         async function loadRules(){
-            const r=await(await fetch('/api/rules')).json();
-            document.getElementById('ruleList').innerHTML = r.map(x=>`<div class="rule-item"><span>${x.name}</span><button class="tool-btn" style="background:#c0392b;color:white" onclick="deleteRule(${x.id})">Xóa</button></div>`).join('');
+        const r=await(await fetch('/api/rules')).json();
+        document.getElementById('ruleList').innerHTML = r.map(x=>`<div class="rule-item"><span>${x.name}</span><button class="tool-btn" style="background:#c0392b;color:white" onclick="deleteRule(${x.id})">Xóa</button></div>`).join('');
         }
         function addRule(){
-            const r={name:"Rule "+Date.now(), triggerDevice:document.getElementById('r_triggerDev').value, triggerParam:document.getElementById('r_triggerParam').value, condition:document.getElementById('r_condition').value, value:document.getElementById('r_value').value, targetDevice:document.getElementById('r_targetDev').value, action:document.getElementById('r_action').value};
-            fetch('/api/rules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)}).then(loadRules);
+        const r={name:"Rule "+Date.now(), triggerDevice:document.getElementById('r_triggerDev').value, triggerParam:document.getElementById('r_triggerParam').value, condition:document.getElementById('r_condition').value, value:document.getElementById('r_value').value, targetDevice:document.getElementById('r_targetDev').value, action:document.getElementById('r_action').value};
+        fetch('/api/rules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)}).then(loadRules);
         }
         function deleteRule(id){ fetch(`/api/rules/${id}`,{method:'DELETE'}).then(loadRules); }
     </script>
