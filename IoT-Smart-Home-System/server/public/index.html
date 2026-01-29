@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart IoT Dashboard V4</title>
+    <title>Smart IoT Dashboard V4.2 (Final Fix)</title>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,24 +11,36 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.1/chartjs-plugin-zoom.min.js"></script>
 
     <style>
+        /* QUAN TRỌNG: Giúp chia cột chính xác không bị vỡ */
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', sans-serif;
             background: #f0f2f5;
             margin: 0;
         }
 
+        /* Navbar */
         .navbar {
             background: #2c3e50;
             color: white;
-            padding: 15px;
+            padding: 10px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
         .nav-tabs {
             display: flex;
-            gap: 10px;
+            gap: 5px;
         }
 
         .tab-btn {
@@ -36,26 +48,61 @@
             border: none;
             color: #bbb;
             cursor: pointer;
-            font-size: 16px;
-            padding: 5px 10px;
+            font-size: 15px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: 0.3s;
         }
+
+            .tab-btn:hover {
+                background: rgba(255,255,255,0.1);
+                color: white;
+            }
 
             .tab-btn.active {
                 color: white;
-                border-bottom: 2px solid #3498db;
+                background: #3498db;
                 font-weight: bold;
             }
 
+        /* User Menu */
+        .user-menu {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-user {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            color: white;
+        }
+
+        .btn-pass {
+            background: #16a085;
+        }
+
+        .btn-logout {
+            background: #c0392b;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        /* Container */
         .container {
             padding: 20px;
             display: none;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
             .container.active {
                 display: block;
             }
 
-        /* Device Cards */
+        /* --- DASHBOARD --- */
         #deviceList {
             display: flex;
             flex-wrap: wrap;
@@ -70,12 +117,8 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             overflow: hidden;
             position: relative;
-            transition: transform 0.2s;
+            margin-bottom: 0;
         }
-
-            .card:hover {
-                transform: translateY(-3px);
-            }
 
         .card-header {
             background: #34495e;
@@ -84,7 +127,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: grab;
         }
+
+            .card-header:active {
+                cursor: grabbing;
+            }
 
         .card-body {
             padding: 20px;
@@ -108,6 +156,7 @@
             padding: 15px;
         }
 
+        /* Switch CSS */
         .switch {
             position: relative;
             display: inline-block;
@@ -153,26 +202,25 @@
                 transform: translateX(20px);
             }
 
-        /* GRID CHARTS AREA (CSS MỚI) */
+        /* --- BIỂU ĐỒ (FIXED GRID) --- */
         #chartsArea {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
+            width: 100%;
         }
 
-        /* Widget Biểu Đồ */
         .chart-box {
             background: white;
             padding: 15px;
             border-radius: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            position: relative;
-            /* Mặc định chiếm 48% chiều rộng (2 cột) */
+            /* Fix lỗi 1 cột: 50% trừ đi một nửa khoảng gap (10px) */
             width: calc(50% - 10px);
-            transition: width 0.3s ease;
+            transition: all 0.3s ease;
+            position: relative;
         }
 
-            /* Khi mở rộng thì chiếm 100% */
             .chart-box.full-width {
                 width: 100%;
             }
@@ -189,15 +237,7 @@
         .chart-title {
             font-weight: bold;
             color: #34495e;
-            display: flex;
-            align-items: center;
-            gap: 5px;
             cursor: move;
-        }
-
-        .chart-tools {
-            display: flex;
-            gap: 5px;
         }
 
         .tool-btn {
@@ -207,21 +247,27 @@
             border-radius: 4px;
             border: none;
             font-size: 14px;
-            transition: 0.2s;
         }
 
-            .tool-btn:hover {
-                background: #ddd;
-            }
+        /* Fix lỗi phóng to không cao lên */
+        .canvas-container {
+            position: relative;
+            height: 250px; /* Chiều cao mặc định */
+            transition: height 0.3s ease;
+            width: 100%;
+        }
+
+        .chart-box.full-width .canvas-container {
+            height: 500px; /* Khi phóng to thì cao gấp đôi */
+        }
 
         @media (max-width: 768px) {
             .chart-box {
                 width: 100% !important;
             }
-            /* Mobile thì luôn full */
         }
 
-        /* Automation & Modal */
+        /* --- AUTOMATION & MODAL --- */
         .rule-form {
             background: white;
             padding: 20px;
@@ -255,32 +301,41 @@
 
         .modal-content {
             background-color: white;
-            margin: 5% auto;
+            margin: 10% auto;
             padding: 20px;
             border-radius: 8px;
-            width: 600px;
+            width: 500px;
             max-width: 90%;
         }
 
-        table {
+        .modal input {
             width: 100%;
-            border-collapse: collapse;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
 
-        th, td {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            text-align: left;
+        .modal-footer {
+            margin-top: 15px;
+            text-align: right;
         }
     </style>
 </head>
 <body>
+
     <div class="navbar">
-        <h3>IOT DASHBOARD V4</h3>
-        <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('dashboard')">Điều Khiển</button>
-            <button class="tab-btn" onclick="switchTab('charts')">Biểu Đồ</button>
-            <button class="tab-btn" onclick="switchTab('automation')">Tự Động Hóa</button>
+        <div class="nav-left">
+            <h3 style="margin:0; margin-right:20px;">IOT DASHBOARD</h3>
+            <div class="nav-tabs">
+                <button class="tab-btn active" onclick="switchTab('dashboard')">Điều Khiển</button>
+                <button class="tab-btn" onclick="switchTab('charts')">Biểu Đồ</button>
+                <button class="tab-btn" onclick="switchTab('automation')">Tự Động Hóa</button>
+            </div>
+        </div>
+        <div class="user-menu">
+            <button class="btn-user btn-pass" onclick="openPassModal()">🔑 Đổi Mật Khẩu</button>
+            <a href="/logout" class="btn-user btn-logout">🚪 Thoát</a>
         </div>
     </div>
 
@@ -289,15 +344,13 @@
     </div>
 
     <div id="charts" class="container">
-        <div style="display:flex; justify-content: space-between; margin-bottom:15px;">
-            <span style="color:#666; font-size:14px;">💡 Kéo thả tiêu đề để sắp xếp. Bấm [⤢] để phóng to.</span>
-            <button class="tool-btn" style="background:#3498db; color:white" onclick="openChartSettings()">⚙️ Quản Lý</button>
+        <div style="text-align:right; margin-bottom:10px;">
+            <button class="tool-btn" style="background:#3498db; color:white" onclick="openChartSettings()">⚙️ Cấu Hình</button>
         </div>
         <div id="chartsArea"></div>
     </div>
 
     <div id="automation" class="container">
-        <h3>Thêm Luật Mới</h3>
         <div class="rule-form">
             <span>Nếu</span>
             <select id="r_triggerDev"><option>--Chọn Thiết Bị--</option></select>
@@ -314,14 +367,27 @@
 
     <div id="chartModal" class="modal">
         <div class="modal-content">
-            <h3>Cấu Hình Biểu Đồ</h3>
-            <table>
-                <thead><tr><th>ID Gốc</th><th>Tên Hiển Thị</th><th>Hiện?</th></tr></thead>
+            <h3>Quản Lý Biểu Đồ</h3>
+            <table style="width:100%; border-collapse: collapse;">
+                <thead><tr><th style="text-align:left">ID</th><th style="text-align:left">Tên Hiển Thị</th><th>Hiện?</th></tr></thead>
                 <tbody id="chartSettingsBody"></tbody>
             </table>
-            <div style="margin-top:20px; text-align:right;">
-                <button class="tool-btn" onclick="saveChartConfig()" style="background:#3498db; color:white">Lưu & Áp dụng</button>
+            <div class="modal-footer">
+                <button class="tool-btn" style="background:#3498db; color:white" onclick="saveChartConfig()">Lưu</button>
                 <button class="tool-btn" onclick="document.getElementById('chartModal').style.display='none'">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="passModal" class="modal">
+        <div class="modal-content" style="width:350px">
+            <h3>Đổi Mật Khẩu</h3>
+            <label>Tên đăng nhập mới:</label> <input type="text" id="newUser">
+            <label>Mật khẩu cũ:</label> <input type="password" id="oldPass">
+            <label>Mật khẩu mới:</label> <input type="password" id="newPass">
+            <div class="modal-footer">
+                <button class="tool-btn" style="background:#3498db; color:white" onclick="changePass()">Cập nhật</button>
+                <button class="tool-btn" onclick="document.getElementById('passModal').style.display='none'">Hủy</button>
             </div>
         </div>
     </div>
@@ -332,10 +398,26 @@
         let chartData = {};
         let chartConfig = {};
         let myCharts = {};
+        let isFirstRender = true; // Cờ để chỉ sort lần đầu
 
-        // 1. DASHBOARD & DEVICES
+        // 1. XỬ LÝ DASHBOARD THÔNG MINH (NON-DESTRUCTIVE)
         const devContainer = document.getElementById('deviceList');
-        new Sortable(devContainer, { animation: 150, onEnd: () => { /* Save order logic if needed */ } });
+
+        new Sortable(devContainer, {
+        animation: 150,
+        handle: '.card-header',
+        onEnd: function (evt) {
+        // Khi kéo thả xong, lưu thứ tự ngay
+        const newOrder = Array.from(devContainer.children).map(el => el.getAttribute('data-id'));
+        // Cập nhật local data để không bị nhảy lại
+        newOrder.forEach((id, index) => { if(devicesData[id]) devicesData[id].order = index; });
+
+        fetch('/api/reorder', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(newOrder)
+        });
+        }
+        });
 
         socket.on('update_ui', (devices) => {
         devicesData = devices;
@@ -344,8 +426,23 @@
         });
 
         function renderDashboard() {
+        // Lần đầu tiên: Sort theo thứ tự từ server
+        if(isFirstRender) {
+        const sortedArr = Object.entries(devicesData).sort(([,a],[,b]) => (a.order || 0) - (b.order || 0));
+        // Vẽ lại toàn bộ lần đầu
         devContainer.innerHTML = '';
+        sortedArr.forEach(([id, d]) => createOrUpdateCard(id, d));
+        isFirstRender = false;
+        } else {
+        // Những lần sau: Chỉ update giá trị, KHÔNG XÓA thẻ cũ -> Sẽ không bị nhảy vị trí
         for (const [id, d] of Object.entries(devicesData)) {
+        createOrUpdateCard(id, d);
+        }
+        }
+        }
+
+        function createOrUpdateCard(id, d) {
+        // Tạo nội dung HTML bên trong thẻ
         let params = '';
         const ignores = ['id','name','status','order','relay','auto','threshold','lastSeen'];
         for(const [k, v] of Object.entries(d)) {
@@ -371,42 +468,50 @@
         </div>`;
         }
 
-        devContainer.innerHTML += `
-        <div class="card">
+        const innerHTML = `
         <div class="card-header">
         <span>${d.name} <span style="font-size:12px; cursor:pointer" onclick="renameDevice('${id}')">✏️</span></span>
         <div style="width:10px; height:10px; border-radius:50%; background:${d.status==='online'?'#2ecc71':'#e74c3c'}"></div>
         </div>
         <div class="card-body">${params}</div>
         ${controls}
-        </div>`;
+        `;
+
+        // Kiểm tra thẻ đã tồn tại chưa
+        let card = document.querySelector(`.card[data-id="${id}"]`);
+        if (card) {
+        // Nếu có rồi -> Chỉ update nội dung bên trong (Giữ nguyên vị trí DOM)
+        if(card.innerHTML !== innerHTML) card.innerHTML = innerHTML;
+        } else {
+        // Nếu chưa có -> Tạo mới và thêm vào cuối
+        const newCard = document.createElement('div');
+        newCard.className = 'card';
+        newCard.setAttribute('data-id', id);
+        newCard.innerHTML = innerHTML;
+        devContainer.appendChild(newCard);
         }
         }
+
         function sendCmd(id, obj) { socket.emit('change_settings', { id, settings: obj }); }
         function renameDevice(id) {
         const n = prompt("Tên mới:", devicesData[id].name);
         if(n) fetch('/api/rename', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, newName:n})});
         }
 
-        // 2. CHART WIDGETS (CORE V4)
+        // 2. BIỂU ĐỒ (FIX SIZE & LAYOUT)
         const chartArea = document.getElementById('chartsArea');
-        // Kích hoạt kéo thả cho biểu đồ
-        new Sortable(chartArea, {
-        animation: 150,
-        handle: '.chart-title', // Chỉ kéo được khi nắm vào tiêu đề
-        onEnd: function() { saveChartLayout(); }
-        });
+        new Sortable(chartArea, { animation: 150, handle: '.chart-title', onEnd: function() { saveChartLayout(); } });
 
         socket.on('init_chart', (data) => {
         chartData = data.history;
         chartConfig = data.chartConfig || {};
         renderCharts();
         });
-
         socket.on('update_chart_data', (data) => {
         chartData = data.history;
         if(data.chartConfig) chartConfig = data.chartConfig;
 
+        // Chỉ update data của chart đã có, không vẽ lại DOM
         for (const [key, points] of Object.entries(chartData)) {
         if(myCharts[key]) {
         const chart = myCharts[key];
@@ -414,28 +519,32 @@
         chart.data.datasets[0].data = points.map(p => p.v);
         chart.update('none');
         } else {
-        renderCharts(); // Vẽ lại nếu có biểu đồ mới
+        renderCharts(); // Chỉ vẽ lại nếu xuất hiện chart mới
         }
         }
         });
-
         socket.on('update_chart_config', (cfg) => { chartConfig = cfg; renderCharts(); });
 
         function renderCharts() {
-        // Sắp xếp theo thứ tự order
+        // Lọc và sort
         const keys = Object.keys(chartData).sort((a,b) => (chartConfig[a]?.order || 0) - (chartConfig[b]?.order || 0));
+        const activeKeys = [];
 
-        // Xóa những chart không còn tồn tại hoặc bị ẩn
-        const currentIds = [];
         keys.forEach(key => {
         const cfg = chartConfig[key] || { visible: true };
         if(!cfg.visible) return;
+        activeKeys.push(key);
 
-        currentIds.push(key);
-        if(document.getElementById(`box_${key}`)) return; // Đã có rồi thì thôi
+        // Nếu widget đã có -> Update class size nếu cần
+        let div = document.getElementById(`box_${key}`);
+        if (div) {
+        if(cfg.size === 'full' && !div.classList.contains('full-width')) div.classList.add('full-width');
+        if(cfg.size !== 'full' && div.classList.contains('full-width')) div.classList.remove('full-width');
+        return;
+        }
 
-        // Tạo Widget mới
-        const div = document.createElement('div');
+        // Nếu chưa có -> Tạo mới
+        div = document.createElement('div');
         div.id = `box_${key}`;
         div.className = `chart-box ${cfg.size === 'full' ? 'full-width' : ''}`;
         div.setAttribute('data-key', key);
@@ -443,11 +552,11 @@
         <div class="chart-header">
         <div class="chart-title">::: ${cfg.alias || key}</div>
         <div class="chart-tools">
-        <button class="tool-btn" onclick="resetZoom('${key}')">🔍 Reset</button>
+        <button class="tool-btn" onclick="resetZoom('${key}')">Reset</button>
         <button class="tool-btn" onclick="toggleSize('${key}')">⤢</button>
         </div>
         </div>
-        <div style="position: relative; height:200px">
+        <div class="canvas-container">
         <canvas id="canvas_${key}"></canvas>
         </div>
         `;
@@ -475,86 +584,81 @@
         });
         });
 
-        // Xóa các chart dư thừa (do bị ẩn đi)
+        // Xóa widget dư thừa (nếu user ẩn đi)
         Array.from(chartArea.children).forEach(child => {
-        const k = child.getAttribute('data-key');
-        if(!currentIds.includes(k)) child.remove();
+        if(!activeKeys.includes(child.getAttribute('data-key'))) child.remove();
         });
         }
 
         function toggleSize(key) {
         const box = document.getElementById(`box_${key}`);
         box.classList.toggle('full-width');
-        // Lưu trạng thái size
         const isFull = box.classList.contains('full-width');
         if(!chartConfig[key]) chartConfig[key] = {};
         chartConfig[key].size = isFull ? 'full' : 'half';
         saveChartLayout();
         }
-
-        function resetZoom(key) { if(myCharts[key]) myCharts[key].resetZoom(); }
-
         function saveChartLayout() {
-        // Lưu thứ tự và size
-        const children = Array.from(chartArea.children);
         const newConfig = { ...chartConfig };
-
-        children.forEach((child, index) => {
+        Array.from(chartArea.children).forEach((child, index) => {
         const key = child.getAttribute('data-key');
         if(!newConfig[key]) newConfig[key] = {};
         newConfig[key].order = index;
         newConfig[key].size = child.classList.contains('full-width') ? 'full' : 'half';
         });
+        fetch('/api/chart-config', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(newConfig) });
+        }
+        function resetZoom(key) { if(myCharts[key]) myCharts[key].resetZoom(); }
 
-        fetch('/api/chart-config', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(newConfig)
+        // 3. LOGIC MẬT KHẨU
+        function openPassModal() { document.getElementById('passModal').style.display = 'block'; }
+        async function changePass() {
+        const newUser = document.getElementById('newUser').value;
+        const oldPass = document.getElementById('oldPass').value;
+        const newPass = document.getElementById('newPass').value;
+        if(!newUser || !oldPass || !newPass) return alert("Thiếu thông tin");
+
+        const res = await fetch('/change-password', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ oldPass, newPass, newUser })
         });
+        const data = await res.json();
+        alert(data.msg);
+        if(data.success) location.reload();
         }
 
-        // 3. SETTINGS MODAL
-        function openChartSettings() {
-        const tbody = document.getElementById('chartSettingsBody');
-        tbody.innerHTML = '';
-        for (const key of Object.keys(chartData)) {
-        const cfg = chartConfig[key] || { visible: true, alias: key };
-        tbody.innerHTML += `
-        <tr data-key="${key}">
-        <td style="font-size:12px; color:#888">${key}</td>
-        <td><input type="text" class="alias-input" value="${cfg.alias}" style="width:100%"></td>
-        <td><input type="checkbox" class="vis-check" ${cfg.visible?'checked':''}></td>
-        </tr>`;
-        }
-        document.getElementById('chartModal').style.display = 'block';
-        }
-
-        function saveChartConfig() {
-        const rows = document.querySelectorAll('#chartSettingsBody tr');
-        const newConfig = { ...chartConfig };
-        rows.forEach(row => {
-        const key = row.getAttribute('data-key');
-        if(!newConfig[key]) newConfig[key] = {};
-        newConfig[key].alias = row.querySelector('.alias-input').value;
-        newConfig[key].visible = row.querySelector('.vis-check').checked;
-        });
-
-        fetch('/api/chart-config', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(newConfig) })
-        .then(() => document.getElementById('chartModal').style.display = 'none');
-        }
-
+        // Logic Tab & Automation
         function switchTab(id) {
         document.querySelectorAll('.container').forEach(c=>c.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
         event.target.classList.add('active');
         }
+        function openChartSettings() {
+        const tbody = document.getElementById('chartSettingsBody');
+        tbody.innerHTML = '';
+        for (const key of Object.keys(chartData)) {
+        const cfg = chartConfig[key] || { visible: true, alias: key };
+        tbody.innerHTML += `<tr data-key="${key}"><td>${key}</td><td><input class="alias-input" value="${cfg.alias}"></td><td><input type="checkbox" class="vis-check" ${cfg.visible?'checked':''}></td></tr>`;
+        }
+        document.getElementById('chartModal').style.display = 'block';
+        }
+        function saveChartConfig() {
+        const newConfig = { ...chartConfig };
+        document.querySelectorAll('#chartSettingsBody tr').forEach(row => {
+        const key = row.getAttribute('data-key');
+        if(!newConfig[key]) newConfig[key] = {};
+        newConfig[key].alias = row.querySelector('.alias-input').value;
+        newConfig[key].visible = row.querySelector('.vis-check').checked;
+        });
+        fetch('/api/chart-config', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(newConfig) })
+        .then(() => document.getElementById('chartModal').style.display = 'none');
+        }
         function updateDropdowns() {
         const s1=document.getElementById('r_triggerDev'), s2=document.getElementById('r_targetDev');
         if(s1.options.length>1)return;
         for(const[id,d] of Object.entries(devicesData)) {
-        const opt=`<option value="${id}">${d.name}</option>`;
-        s1.innerHTML+=opt; s2.innerHTML+=opt;
+        const opt=`<option value="${id}">${d.name}</option>`; s1.innerHTML+=opt; s2.innerHTML+=opt;
         }
         loadRules();
         }
