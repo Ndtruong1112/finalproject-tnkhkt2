@@ -94,7 +94,7 @@ Tại sao lại chọn những công nghệ này? Dưới đây là giải thíc
 ### Sơ đồ nguyên lý (Schematic)
 Chi tiết cách đấu nối các module với ESP32.
 
-![Schematic](IoT-Smart-Home-System/docs/schematic1.png)
+![Schematic](IoT-Smart-Home-System/docs/schematic.png)
 
 
 ### Bảng đấu nối (Pinout Mapping)
